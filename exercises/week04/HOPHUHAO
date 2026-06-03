@@ -1,0 +1,306 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <iomanip>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+using Clock = chrono::high_resolution_clock;
+
+// Cấu trúc dùng để lưu trữ số phép toán cho Bài 2
+struct Stats {
+    long long comparisons = 0; // Số lần so sánh (liếc mắt nhìn)
+    long long swaps = 0;       // Số lần hoán đổi hoặc dịch chuyển (tốn sức tay)
+};
+
+// ============================================================
+// BÀI 1: CÀI ĐẶT 3 THUẬT TOÁN - IN RA TỪNG BƯỚC ĐỂ THEO DÕI
+// ============================================================
+
+// 1. BUBBLE SORT (Sắp xếp nổi bọt)
+void bubbleSort(vector<int> arr) {
+    int n = arr.size();
+    cout << "\n--- Bubble Sort (Demo mang nho) ---\n";
+    cout << "Ban dau: ";
+    for (int x : arr) cout << x << " ";
+    cout << endl;
+
+    for (int i = 0; i < n - 1; i++) {
+        bool swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+
+            // 🔑 DÒNG QUAN TRỌNG: So sánh và hoán đổi cặp kề nhau
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                swapped = true;
+            }
+        }
+        cout << "Buoc " << i + 1 << ": ";
+        for (int x : arr) cout << x << " ";
+        cout << endl;
+
+        // Thoát sớm nếu cả vòng quét không có bất kỳ lệnh swap nào
+        if (!swapped) break;
+    }
+}
+//Tốt nhất (Best Case)
+// Ví dụ cụ thể: {10, 20, 30, 40, 50}Tại sao tốt nhất: Máy tính quét qua cặp kề nhau đúng 1 vòng duy nhất để kiểm tra. Vì không phát hiện bất kỳ cặp nào sai thứ tự, 
+// lệnh swap không chạy $\rightarrow$ cờ hiệu swapped giữ nguyên là false $\rightarrow$ lệnh break kích hoạt và tắt máy nghỉ sớm luôn.
+
+//Xấu nhất (Worst Case)
+//Ví dụ cụ thể : {50, 40, 30, 20, 10}
+//Tại sao xấu nhất : Các số lớn nhất nằm sai vị trí trầm trọng ở đầu dãy.Thuật toán phải "lết" từng bước một để đẩy số lớn về cuối hàng.Số lần so sánh và số lần swap tráo đổi ô nhớ đều đạt mức kịch khung.
+
+// 2. SELECTION SORT (Sắp xếp chọn)
+void selectionSort(vector<int> arr) {
+    int n = arr.size();
+    cout << "\n--- Selection Sort (Demo mang nho) ---\n";
+    cout << "Ban dau: ";
+    for (int x : arr) cout << x << " ";
+    cout << endl;
+
+    for (int i = 0; i < n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++) {
+
+            // 🔑 DÒNG QUAN TRỌNG: Quét để ghi nhớ vị trí kẻ nhỏ nhất
+            if (arr[j] < arr[minIdx]) minIdx = j;
+        }
+        // Tìm xong kẻ nhỏ nhất trong đoạn mới thực hiện swap duy nhất 1 lần về đầu
+        if (minIdx != i) swap(arr[i], arr[minIdx]);
+
+        cout << "Buoc " << i + 1 << ": ";
+        for (int x : arr) cout << x << " ";
+        cout << endl;
+    }
+}
+//Tốt nhất (Best Case)
+//Ví dụ cụ thể : {11, 22, 33, 44, 55}
+//Tại sao tốt nhất : Ở kịch bản này, điểm tốt duy nhất là bạn không tốn sức hoán đổi
+//swap) dữ liệu vì phần tử đầu đoạn luôn chính là phần tử nhỏ nhất(minIdx == i).Tuy nhiên, thuật toán này rất "bảo thủ",
+// nó vẫn bắt máy tính chạy đủ các vòng lặp để quét mắt kiểm tra cạn kiệt không thiếu một số nào.
+
+//Xấu nhất(Worst Case)
+// Ví dụ cụ thể: {55, 44, 33, 22, 11}
+// Tại sao xấu nhất: Cứ mỗi bước liếc nhìn sang phần tử tiếp theo, máy tính lại phát hiện ra một số nhỏ hơn số trước đó,
+// buộc biến vị trí minIdx phải liên tục cập nhật lại giá trị mới, đồng thời số lần thực hiện hàm swap đạt mức tối đa (n-1 lần).
+
+// 3. INSERTION SORT (Sắp xếp chèn)
+void insertionSort(vector<int> arr) {
+    int n = arr.size();
+    cout << "\n--- Insertion Sort (Demo mang nho) ---\n";
+    cout << "Ban dau: ";
+    for (int x : arr) cout << x << " ";
+    cout << endl;
+
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+
+        // 🔑 DÒNG QUAN TRỌNG: Dịch chuyển các phần tử lớn hơn sang phải để dọn đường
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key; // Chèn phần tử vào khoảng trống vừa tạo
+
+        cout << "Buoc " << i << ": ";
+        for (int x : arr) cout << x << " ";
+        cout << endl;
+    }
+}
+//Tốt nhất (Best Case)
+// Ví dụ cụ thể: {12, 22, 32, 42, 52}
+// Tại sao tốt nhất: Giống như khi bạn chơi bài Tây, bạn bốc một quân bài mới lên, liếc mắt nhìn sang bên trái thấy nó đã lớn hơn quân bài trước đó rồi.
+// Điều kiện vòng lặp while (arr[j] > key) bị sai ngay lập tức, 
+// vòng lặp không chạy quân bài được cắm luôn tại chỗ mà không tốn bất kỳ một bước dịch chuyển mảng nào.
+
+// Xấu nhất (Worst Case)
+// Ví dụ cụ thể: {52, 42, 32, 22, 12}
+// Tại sao xấu nhất: Cứ mỗi lần bạn bốc một quân bài mới ở phía sau, 
+// bạn lại phải lội ngược dòng so sánh về tận đầu hàng (vị trí số 0) và bắt buộc tất cả các quân bài đứng phía trước phải dịch chuyển tịnh tiến sang bên phải để dọn đường trống, 
+// cực kỳ tốn công sức dời dữ liệu.
+
+
+// BÀI 2: ĐẾM SỐ PHÉP SO SÁNH VÀ HOÁN VỊ (MẢNG 100 PHẦN TỬ)
+
+
+Stats bubbleSortCount(vector<int> arr) {
+    Stats s;
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        bool swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+            s.comparisons++;
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                s.swaps++;
+                swapped = true;
+            }
+        }
+        if (!swapped) break;
+    }
+    return s;
+}
+//vd
+
+Stats selectionSortCount(vector<int> arr) {
+    Stats s;
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++) {
+            s.comparisons++;
+            if (arr[j] < arr[minIdx]) minIdx = j;
+        }
+        if (minIdx != i) {
+            swap(arr[i], arr[minIdx]);
+            s.swaps++;
+        }
+    }
+    return s;
+}
+//vd
+
+Stats insertionSortCount(vector<int> arr) {
+    Stats s;
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0) {
+            s.comparisons++;
+            if (arr[j] > key) {
+                arr[j + 1] = arr[j];
+                s.swaps++; // Tính số lần dịch chuyển tịnh tiến sang phải
+                j--;
+            }
+            else break; // Ngắt dừng sớm khi thấy số nhỏ hơn key (bí kíp Best Case)
+        }
+        arr[j + 1] = key;
+    }
+    return s;
+}
+
+void bai2() {
+    const int N = 100;
+    vector<int> arr(N);
+    srand(42); // Giữ seed cố định để mảng ngẫu nhiên của 3 thuật toán là y hệt nhau
+    for (int i = 0; i < N; i++) arr[i] = rand() % 1000;
+
+    Stats bs = bubbleSortCount(arr);
+    Stats ss = selectionSortCount(arr);
+    Stats is = insertionSortCount(arr);
+
+    cout << "\n============================================================\n";
+    cout << "BAI 2: SO SANH SO PHEP SO SANH VA HOAN VI (mang 100 phan tu)\n";
+    cout << "============================================================\n";
+    cout << left << setw(20) << "Thuat toan"
+        << setw(20) << "So sanh"
+        << setw(20) << "Hoan vi / Dich chuyen" << endl;
+    cout << string(60, '-') << endl;
+    cout << left << setw(20) << "Bubble Sort" << setw(20) << bs.comparisons << setw(20) << bs.swaps << endl;
+    cout << left << setw(20) << "Selection Sort" << setw(20) << ss.comparisons << setw(20) << ss.swaps << endl;
+    cout << left << setw(20) << "Insertion Sort" << setw(20) << is.comparisons << setw(20) << is.swaps << endl;
+}
+//vd
+// ============================================================
+// BÀI 3: ĐO THỜI GIAN CHẠY THỰC TẾ (BEST / WORST / AVERAGE CASE)
+// ============================================================
+
+double measureBubble(vector<int> arr) {
+    auto start = Clock::now();
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        bool swapped = false;
+        for (int j = 0; j < n - i - 1; j++)
+            if (arr[j] > arr[j + 1]) { swap(arr[j], arr[j + 1]); swapped = true; }
+        if (!swapped) break;
+    }
+    return chrono::duration<double, micro>(Clock::now() - start).count();
+}
+
+double measureSelection(vector<int> arr) {
+    auto start = Clock::now();
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++)
+            if (arr[j] < arr[minIdx]) minIdx = j;
+        if (minIdx != i) swap(arr[i], arr[minIdx]);
+    }
+    return chrono::duration<double, micro>(Clock::now() - start).count();
+}
+
+double measureInsertion(vector<int> arr) {
+    auto start = Clock::now();
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j]; j--; }
+        arr[j + 1] = key;
+    }
+    return chrono::duration<double, micro>(Clock::now() - start).count();
+}
+
+void bai3() {
+    const int N = 3000; // Quy mô mảng lớn để thấy rõ sự chênh lệch thời gian thực tế
+    srand(42);
+
+    // Kịch bản Best case: mảng tăng dần sẵn
+    vector<int> best(N);
+    for (int i = 0; i < N; i++) best[i] = i;
+
+    // Kịch bản Worst case: mảng đảo ngược giảm dần
+    vector<int> worst(N);
+    for (int i = 0; i < N; i++) worst[i] = N - i;
+
+    // Kịch bản Average case: mảng ngẫu nhiên hoàn toàn
+    vector<int> avg(N);
+    for (int i = 0; i < N; i++) avg[i] = rand() % 10000;
+
+    cout << "\n============================================================\n";
+    cout << "BAI 3: DO THOI GIAN CHAY (mang " << N << " phan tu, don vi: microseconds)\n";
+    cout << "============================================================\n";
+    cout << left << setw(20) << "Thuat toan"
+        << setw(20) << "Best (Tot nhat)"
+        << setw(20) << "Worst (Xau nhat)"
+        << setw(20) << "Average (Ngau nhien)" << endl;
+    cout << string(70, '-') << endl;
+
+    cout << fixed << setprecision(2);
+    cout << left << setw(20) << "Bubble Sort" << setw(20) << measureBubble(best) << setw(20) << measureBubble(worst) << setw(20) << measureBubble(avg) << endl;
+    cout << left << setw(20) << "Selection Sort" << setw(20) << measureSelection(best) << setw(20) << measureSelection(worst) << setw(20) << measureSelection(avg) << endl;
+    cout << left << setw(20) << "Insertion Sort" << setw(20) << measureInsertion(best) << setw(20) << measureInsertion(worst) << setw(20) << measureInsertion(avg) << endl;
+
+    cout << "\n📌 KET LUAN NHANH VE THOI GIAN:\n";
+    cout << "- Insertion Sort: Ve dich dau tien o cot Best Case nho triet tieu hoan toan buoc dich chuyen.\n";
+    cout << "- Selection Sort: Thoi gian o cot Best hay Worst lech nhau rat it (luon giu muc O(n^2)).\n";
+    cout << "- Bubble Sort: Chay rất đuoi suc o cot mang Ngau nhien (Average) và Ngược (Worst).\n";
+}
+//vd
+
+// ============================================================
+// HÀM MAIN: TRUNG TÂM ĐIỀU KHIỂN CHƯƠNG TRÌNH
+// ============================================================
+int main() {
+    // CHẠY BÀI 1: Demo mảng nhỏ gồm 7 phần tử để in từng bước chạy
+    cout << "============================================================\n";
+    cout << "BAI 1: CAI DAT 3 THUAT TOAN VOI MANG NHO - IN TUNG BUOC\n";
+    cout << "============================================================\n";
+    vector<int> demo = { 70, 33, 25, 13, 24, 12, 99 };
+    bubbleSort(demo);
+    selectionSort(demo);
+    insertionSort(demo);
+
+    // CHẠY BÀI 2: Đếm số phép so sánh và đổi chỗ trên mảng 100 phần tử
+    bai2();
+
+    // CHẠY BÀI 3: Đo đạc tốc độ micro-giây thực tế trên quy mô mảng 3000 phần tử
+    bai3();
+
+    return 0;
+}
